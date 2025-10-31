@@ -93,6 +93,14 @@ export default function LoginForm() {
                     {loginMutation.isPending ? '로그인 중...' : '로그인'}
                 </Button>
             </form>
+            <Button
+                variant="text"
+                fullWidth
+                sx={{ mt: 1 }}
+                onClick={() => router.push('/signup')}
+            >
+                아직 회원이 아니신가요? 회원가입
+            </Button>
         </Box>
     );
 }
