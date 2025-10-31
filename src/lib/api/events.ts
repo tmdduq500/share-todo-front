@@ -7,7 +7,7 @@ export const createEvent = async (data: EventInput) => {
         title: data.title,
         startAtLocal: data.startAt,
         endAtLocal: data.endAt,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezone: data.timezone,
         allDay: data.allDay,
         visibility: data.visibility,
         ...(data.description ? {description: data.description} : {}),

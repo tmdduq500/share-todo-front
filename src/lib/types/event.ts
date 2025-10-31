@@ -8,6 +8,7 @@ export interface EventInput {
     startAt: string;
     endAt: string;
     location?: string;
+    timezone?: string;
     allDay: boolean;
     visibility: Visibility;
 }

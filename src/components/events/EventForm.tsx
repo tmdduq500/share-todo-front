@@ -14,7 +14,7 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useRouter} from 'next/navigation';
 import InviteForm from "@/components/events/InviteForm";
 import {useCreateEvent} from "@/lib/hooks/useEvents";
@@ -42,6 +42,12 @@ export default function EventForm() {
     });
     const [error, setError] = useState('');
     const [createdUid, setCreatedUid] = useState<string | null>(null);
+    const [timezone, setTimezone] = useState('');
+
+    useEffect(() => {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setTimezone(tz);
+    }, []);
 
     const createMutation = useCreateEvent();
 
@@ -52,11 +58,19 @@ export default function EventForm() {
             setError('제목, 시작/종료 시간을 입력해주세요.');
             return;
         }
-        createMutation.mutate(form, {
-            onSuccess: (data) => setCreatedUid(data.uid),
-            onError: (err: any) =>
-                setError(err.response?.data?.message || '일정 등록에 실패했습니다.'),
-        });
+        createMutation.mutate(
+            {
+                ...form,
+                startAt: form.startAt,
+                endAt: form.endAt,
+                timezone,
+            },
+            {
+                onSuccess: (data) => setCreatedUid(data.uid),
+                onError: (err: any) =>
+                    setError(err.response?.data?.message || '일정 등록에 실패했습니다.'),
+            }
+        );
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
