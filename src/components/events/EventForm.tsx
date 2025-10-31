@@ -14,10 +14,11 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import {useState} from 'react';
+import React, {useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {useMutation} from '@tanstack/react-query';
 import axios from '@/lib/axios/axios';
+import InviteForm from "@/components/events/InviteForm";
 
 interface EventInput {
     title: string;
@@ -41,19 +42,25 @@ export default function EventForm() {
         visibility: 'PRIVATE',
     });
     const [error, setError] = useState('');
+    const [createdUid, setCreatedUid] = useState<string | null>(null);
 
     const createMutation = useMutation({
-        mutationFn: (data: EventInput) =>
-            axios
-                .post('/events', {
-                    ...data,
-                    startAtLocal: data.startAt,
-                    endAtLocal: data.endAt,
-                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                })
-                .then((res) => res.data.data),
-        onSuccess: () => {
-            router.push('/events');
+        mutationFn: (data: EventInput) => {
+            const payload = {
+                title: data.title,
+                startAtLocal: data.startAt,
+                endAtLocal: data.endAt,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                allDay: data.allDay,
+                visibility: data.visibility,
+                ...(data.description ? { description: data.description } : {}),
+                ...(data.location ? { location: data.location } : {}),
+            };
+
+            return axios.post('/api/events', payload).then((res) => res.data.data);
+        },
+        onSuccess: (data) => {
+            setCreatedUid(data.uid);
         },
         onError: (err: any) => {
             setError(err.response?.data?.message || '일정 등록에 실패했습니다.');
@@ -150,7 +157,7 @@ export default function EventForm() {
                 />
                 <FormControl fullWidth margin="normal">
                     <InputLabel>공개 여부</InputLabel>
-                    <Select value={form.visibility} onChange={handleSelect} label="공개 여부">
+                    <Select value={form.visibility} onChange={handleSelect} label="공개 여부" variant={"outlined"}>
                         <MenuItem value="PRIVATE">비공개</MenuItem>
                         <MenuItem value="PUBLIC">공개</MenuItem>
                     </Select>
@@ -181,6 +188,7 @@ export default function EventForm() {
                     {createMutation.isPending ? '등록 중...' : '일정 등록'}
                 </Button>
             </form>
+            {createdUid && <InviteForm eventUid={createdUid} />}
         </Box>
     );
 }
