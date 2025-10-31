@@ -1,12 +1,11 @@
 'use client';
 
-import {useState} from 'react';
+import React, {useState} from 'react';
 import {useRouter} from 'next/navigation';
-import {useMutation} from '@tanstack/react-query';
-import axios from '@/lib/axios/axios';
 import {useAuthStore} from '@/lib/store/authStore';
 
 import {Alert, Box, Button, Paper, TextField, Typography,} from '@mui/material';
+import {useLogin} from "@/lib/hooks/useAuth";
 
 interface LoginInput {
     email: string;
@@ -20,17 +19,7 @@ export default function LoginForm() {
     const [form, setForm] = useState<LoginInput>({email: '', password: ''});
     const [error, setError] = useState('');
 
-    const loginMutation = useMutation({
-        mutationFn: (data: LoginInput) =>
-            axios.post('/auth/login', data).then((res) => res.data.data),
-        onSuccess: ({accessToken, refreshToken}) => {
-            setTokens(accessToken, refreshToken);
-            router.push('/events');
-        },
-        onError: () => {
-            setError('이메일 또는 비밀번호가 올바르지 않습니다.');
-        },
-    });
+    const {mutate, isPending} = useLogin();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({...form, [e.target.name]: e.target.value});
@@ -39,7 +28,15 @@ export default function LoginForm() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        loginMutation.mutate(form);
+        mutate(form, {
+            onSuccess: ({accessToken, refreshToken}) => {
+                setTokens(accessToken, refreshToken);
+                router.push('/events');
+            },
+            onError: () => {
+                setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+            },
+        });
     };
 
     return (
@@ -88,15 +85,15 @@ export default function LoginForm() {
                     color="primary"
                     fullWidth
                     sx={{mt: 2}}
-                    disabled={loginMutation.isPending}
+                    disabled={isPending}
                 >
-                    {loginMutation.isPending ? '로그인 중...' : '로그인'}
+                    {isPending ? '로그인 중...' : '로그인'}
                 </Button>
             </form>
             <Button
                 variant="text"
                 fullWidth
-                sx={{ mt: 1 }}
+                sx={{mt: 1}}
                 onClick={() => router.push('/signup')}
             >
                 아직 회원이 아니신가요? 회원가입
