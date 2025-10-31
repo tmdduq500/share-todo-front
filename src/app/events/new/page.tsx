@@ -1,11 +1,12 @@
 'use client';
 
 import EventForm from '@/components/events/EventForm';
+import {AuthGuard} from "@/components/auth/AuthGuard";
 
 export default function EventNewPage() {
     return (
-        <main>
-            <EventForm/>
-        </main>
+        <AuthGuard>
+            <EventForm />
+        </AuthGuard>
     );
 }
