@@ -1,4 +1,4 @@
-import axios from '@/lib/axios/axios';
+import axiosInstance from '@/lib/axios/axios';
 import {EventInput, EventListResponse} from '@/lib/types/event';
 import {ApiResponse} from "@/lib/types/response";
 
@@ -10,15 +10,15 @@ export const createEvent = async (data: EventInput) => {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         allDay: data.allDay,
         visibility: data.visibility,
-        ...(data.description ? { description: data.description } : {}),
-        ...(data.location ? { location: data.location } : {}),
+        ...(data.description ? {description: data.description} : {}),
+        ...(data.location ? {location: data.location} : {}),
     };
 
-    const res = await axios.post('/api/events', payload);
+    const res = await axiosInstance.post('/api/events', payload);
     return res.data.data;
 };
 
 export const fetchEventList = async (size: number): Promise<EventListResponse> => {
-    const res = await axios.get<ApiResponse<EventListResponse>>(`/api/events?size=${size}`);
+    const res = await axiosInstance.get<ApiResponse<EventListResponse>>(`/api/events?size=${size}`);
     return res.data.data;
 };
