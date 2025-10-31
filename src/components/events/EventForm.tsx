@@ -16,10 +16,8 @@ import {
 } from '@mui/material';
 import React, {useState} from 'react';
 import {useRouter} from 'next/navigation';
-import {useMutation} from '@tanstack/react-query';
-import axios from '@/lib/axios/axios';
 import InviteForm from "@/components/events/InviteForm";
-import {useCreateEvent} from "@/lib/useEvents";
+import {useCreateEvent} from "@/lib/hooks/useEvents";
 
 interface EventInput {
     title: string;
@@ -172,7 +170,7 @@ export default function EventForm() {
                     {createMutation.isPending ? '등록 중...' : '일정 등록'}
                 </Button>
             </form>
-            {createdUid && <InviteForm eventUid={createdUid} />}
+            {createdUid && <InviteForm eventUid={createdUid}/>}
         </Box>
     );
 }
