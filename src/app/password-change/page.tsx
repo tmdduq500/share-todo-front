@@ -1,10 +1,10 @@
+// app/password-change/page.tsx
 'use client';
 
 import {Alert, Box, Button, Paper, TextField, Typography,} from '@mui/material';
 import {useState} from 'react';
-import {useMutation} from '@tanstack/react-query';
-import axios from '@/lib/axios/axios';
-import {AuthGuard} from "@/components/auth/AuthGuard";
+import {usePasswordChange} from '@/lib/hooks/useAuth';
+import {AuthGuard} from '@/components/auth/AuthGuard';
 
 export default function PasswordChangePage() {
     const [currentPassword, setCurrentPassword] = useState('');
@@ -13,24 +13,7 @@ export default function PasswordChangePage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
 
-    const passwordChangeMutation = useMutation({
-        mutationFn: () =>
-            axios.post('/api/accounts/password/change', {
-                currentPassword,
-                newPassword,
-            }),
-        onSuccess: () => {
-            setSuccess(true);
-            setError('');
-            setCurrentPassword('');
-            setNewPassword('');
-            setConfirmPassword('');
-        },
-        onError: (err: any) => {
-            setSuccess(false);
-            setError(err.response?.data?.message || '비밀번호 변경에 실패했습니다.');
-        },
-    });
+    const passwordChangeMutation = usePasswordChange();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,7 +27,22 @@ export default function PasswordChangePage() {
             setError('비밀번호는 8자 이상이어야 합니다.');
             return;
         }
-        passwordChangeMutation.mutate();
+        passwordChangeMutation.mutate(
+            {currentPassword, newPassword},
+            {
+                onSuccess: () => {
+                    setSuccess(true);
+                    setError('');
+                    setCurrentPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                },
+                onError: (err: any) => {
+                    setSuccess(false);
+                    setError(err.response?.data?.message || '비밀번호 변경에 실패했습니다.');
+                },
+            }
+        );
     };
 
     return (

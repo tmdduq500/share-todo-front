@@ -7,3 +7,8 @@ export const createInvitation = async (
     const res = await axios.post('/api/invitations', payload);
     return res.data.data;
 };
+
+export const acceptInvitation = async (token: string) => {
+    const res = await axios.post('/api/invitations/accept', { token });
+    return res.data.data;
+};
