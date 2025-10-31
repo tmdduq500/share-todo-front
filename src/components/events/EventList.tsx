@@ -1,92 +1,68 @@
 'use client';
 
-import {Alert, Box, Card, CardContent, CircularProgress, Grid, MenuItem, Select, Typography,} from '@mui/material';
-import {useQuery} from '@tanstack/react-query';
+import {Box, Button, CircularProgress, MenuItem, Paper, Select, Typography,} from '@mui/material';
+import {useEventList} from '@/lib/hooks/useEvents';
+import {useRouter} from 'next/navigation';
 import {useState} from 'react';
-import axios from '@/lib/axios/axios';
-import dayjs from 'dayjs';
-
-interface Event {
-    uid: string;
-    title: string;
-    startsAtUtc: string;
-    endsAtUtc: string;
-    location: string;
-    visibility: string;
-}
-
-interface EventListResponse {
-    content: Event[];
-    page: number;
-    size: number;
-    totalElements: number;
-    totalPages: number;
-}
 
 export default function EventList() {
+    const router = useRouter();
     const [size, setSize] = useState(10);
 
-    const {data, isLoading, error} = useQuery<EventListResponse>({
-        queryKey: ['events', size],
-        queryFn: () =>
-            axios
-                .get(`/events?size=${size}`)
-                .then((res) => res.data.data),
-    });
-
-    if (isLoading) {
-        return (
-            <Box textAlign="center" mt={10}>
-                <CircularProgress/>
-            </Box>
-        );
-    }
-
-    if (error) {
-        return <Alert severity="error">일정 목록을 불러오지 못했습니다.</Alert>;
-    }
+    const {data, isLoading, error} = useEventList(size);
 
     return (
-        <Box sx={{maxWidth: 800, mx: 'auto', my: 6}}>
+        <Box
+            component={Paper}
+            elevation={3}
+            sx={{maxWidth: 800, mx: 'auto', my: 6, p: 4}}
+        >
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Typography variant="h5" fontWeight={600}>
                     내 일정 목록
                 </Typography>
-                <Select
-                    variant="outlined"
-                    value={size}
-                    onChange={(e) => setSize(Number(e.target.value))}
-                    size="small"
-                >
-                    {[5, 10, 20, 50].map((s) => (
-                        <MenuItem key={s} value={s}>
-                            {s}개씩 보기
-                        </MenuItem>
-                    ))}
-                </Select>
+                <Box display="flex" gap={1}>
+                    <Select
+                        variant={"outlined"}
+                        value={size}
+                        onChange={(e) => setSize(Number(e.target.value))}
+                        size="small"
+                    >
+                        {[5, 10, 20].map((s) => (
+                            <MenuItem key={s} value={s}>
+                                {s}개씩 보기
+                            </MenuItem>
+                        ))}
+                    </Select>
+                    <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => router.push('/events/new')}
+                    >
+                        일정 등록
+                    </Button>
+                </Box>
             </Box>
 
-            <Grid container spacing={2}>
-                {data?.content.map((event) => (
-                    <Grid key={event.uid}>
-                        <Card>
-                            <CardContent>
-                                <Typography variant="h6">{event.title}</Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    {dayjs(event.startsAtUtc).format('YYYY-MM-DD HH:mm')} ~{' '}
-                                    {dayjs(event.endsAtUtc).format('HH:mm')}
-                                </Typography>
-                                <Typography variant="body2" mt={0.5}>
-                                    장소: {event.location || '없음'}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    공개 여부: {event.visibility}
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                ))}
-            </Grid>
+            {isLoading && <CircularProgress/>}
+            {error && <Typography color="error">불러오기 실패</Typography>}
+            {data && (
+                <Box display="flex" flexDirection="column" gap={2}>
+                    {data.content.map((item) => (
+                        <Box key={item.uid} p={2} border="1px solid #ccc" borderRadius={2}>
+                            <Typography fontWeight={600}>{item.title}</Typography>
+                            <Typography variant="body2">
+                                {item.startsAtUtc} ~ {item.endsAtUtc}
+                            </Typography>
+                            <Typography variant="body2">{item.location}</Typography>
+                            <Typography variant="caption">
+                                {item.visibility === 'PUBLIC' ? '공개' : '비공개'} /{' '}
+                                {item.allDay ? '종일' : '시간 지정'}
+                            </Typography>
+                        </Box>
+                    ))}
+                </Box>
+            )}
         </Box>
     );
 }

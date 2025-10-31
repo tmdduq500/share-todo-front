@@ -1,5 +1,6 @@
 import axios from '@/lib/axios/axios';
-import { EventInput } from '@/lib/types/event';
+import {EventInput, EventListResponse} from '@/lib/types/event';
+import {ApiResponse} from "@/lib/types/response";
 
 export const createEvent = async (data: EventInput) => {
     const payload = {
@@ -14,5 +15,10 @@ export const createEvent = async (data: EventInput) => {
     };
 
     const res = await axios.post('/api/events', payload);
+    return res.data.data;
+};
+
+export const fetchEventList = async (size: number): Promise<EventListResponse> => {
+    const res = await axios.get<ApiResponse<EventListResponse>>(`/api/events?size=${size}`);
     return res.data.data;
 };
