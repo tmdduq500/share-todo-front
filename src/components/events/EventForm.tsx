@@ -19,6 +19,7 @@ import {useRouter} from 'next/navigation';
 import {useMutation} from '@tanstack/react-query';
 import axios from '@/lib/axios/axios';
 import InviteForm from "@/components/events/InviteForm";
+import {useCreateEvent} from "@/lib/useEvents";
 
 interface EventInput {
     title: string;
@@ -44,28 +45,21 @@ export default function EventForm() {
     const [error, setError] = useState('');
     const [createdUid, setCreatedUid] = useState<string | null>(null);
 
-    const createMutation = useMutation({
-        mutationFn: (data: EventInput) => {
-            const payload = {
-                title: data.title,
-                startAtLocal: data.startAt,
-                endAtLocal: data.endAt,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                allDay: data.allDay,
-                visibility: data.visibility,
-                ...(data.description ? { description: data.description } : {}),
-                ...(data.location ? { location: data.location } : {}),
-            };
+    const createMutation = useCreateEvent();
 
-            return axios.post('/api/events', payload).then((res) => res.data.data);
-        },
-        onSuccess: (data) => {
-            setCreatedUid(data.uid);
-        },
-        onError: (err: any) => {
-            setError(err.response?.data?.message || '일정 등록에 실패했습니다.');
-        },
-    });
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        if (!form.title || !form.startAt || !form.endAt) {
+            setError('제목, 시작/종료 시간을 입력해주세요.');
+            return;
+        }
+        createMutation.mutate(form, {
+            onSuccess: (data) => setCreatedUid(data.uid),
+            onError: (err: any) =>
+                setError(err.response?.data?.message || '일정 등록에 실패했습니다.'),
+        });
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const {name, value} = e.target;
@@ -78,16 +72,6 @@ export default function EventForm() {
 
     const handleSelect = (e: any) => {
         setForm({...form, visibility: e.target.value});
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        if (!form.title || !form.startAt || !form.endAt) {
-            setError('제목, 시작/종료 시간을 입력해주세요.');
-            return;
-        }
-        createMutation.mutate(form);
     };
 
     return (
