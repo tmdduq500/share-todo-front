@@ -1,14 +1,22 @@
-import {useAuthStore} from "@/lib/store/authStore";
-import {useRouter} from "next/navigation";
-import React, {useEffect} from "react";
+'use client';
 
-export function AuthGuard({children}: { children: React.ReactNode }) {
-    const token = useAuthStore((s) => s.accessToken);
+import {useAuthStore} from '@/lib/store/authStore';
+import {useRouter} from 'next/navigation';
+import React, {useEffect, useState} from 'react';
+
+export default function AuthGuard({children}: { children: React.ReactNode }) {
+    const accessToken = useAuthStore((s) => s.accessToken);
     const router = useRouter();
+    const [ready, setReady] = useState(false);
 
     useEffect(() => {
-        if (!token) router.replace('/login');
-    }, [token]);
+        if (!accessToken) {
+            router.push('/login');
+        } else {
+            setReady(true);
+        }
+    }, [accessToken, router]);
 
-    return token ? <>{children}</> : null;
+    if (!ready) return null;
+    return <>{children}</>;
 }
