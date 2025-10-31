@@ -4,31 +4,32 @@ import {useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {useMutation} from '@tanstack/react-query';
 import axios from '@/lib/axios/axios';
-import {useAuthStore} from '@/lib/store/authStore';
 
 import {Alert, Box, Button, Paper, TextField, Typography,} from '@mui/material';
 
-interface LoginInput {
+interface SignupInput {
     email: string;
     password: string;
+    confirmPassword: string;
 }
 
-export default function LoginForm() {
+export default function SignupForm() {
     const router = useRouter();
-    const {setTokens} = useAuthStore();
-
-    const [form, setForm] = useState<LoginInput>({email: '', password: ''});
+    const [form, setForm] = useState<SignupInput>({
+        email: '',
+        password: '',
+        confirmPassword: '',
+    });
     const [error, setError] = useState('');
 
-    const loginMutation = useMutation({
-        mutationFn: (data: LoginInput) =>
-            axios.post('/auth/login', data).then((res) => res.data.data),
-        onSuccess: ({accessToken, refreshToken}) => {
-            setTokens(accessToken, refreshToken);
-            router.push('/events');
+    const signupMutation = useMutation({
+        mutationFn: (data: { email: string; password: string }) =>
+            axios.post('/accounts/signup', data).then((res) => res.data.data),
+        onSuccess: () => {
+            router.push('/login');
         },
-        onError: () => {
-            setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+        onError: (err: any) => {
+            setError(err.response?.data?.message || '회원가입에 실패했습니다.');
         },
     });
 
@@ -39,7 +40,18 @@ export default function LoginForm() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        loginMutation.mutate(form);
+
+        if (form.password !== form.confirmPassword) {
+            setError('비밀번호가 일치하지 않습니다.');
+            return;
+        }
+
+        if (form.password.length < 8) {
+            setError('비밀번호는 최소 8자 이상이어야 합니다.');
+            return;
+        }
+
+        signupMutation.mutate({email: form.email, password: form.password});
     };
 
     return (
@@ -57,7 +69,7 @@ export default function LoginForm() {
             }}
         >
             <Typography variant="h5" fontWeight={600}>
-                로그인
+                회원가입
             </Typography>
             <form onSubmit={handleSubmit}>
                 <TextField
@@ -77,6 +89,15 @@ export default function LoginForm() {
                     value={form.password}
                     onChange={handleChange}
                 />
+                <TextField
+                    label="비밀번호 확인"
+                    name="confirmPassword"
+                    type="password"
+                    fullWidth
+                    margin="normal"
+                    value={form.confirmPassword}
+                    onChange={handleChange}
+                />
                 {error && (
                     <Alert severity="error" sx={{mt: 1}}>
                         {error}
@@ -88,9 +109,9 @@ export default function LoginForm() {
                     color="primary"
                     fullWidth
                     sx={{mt: 2}}
-                    disabled={loginMutation.isPending}
+                    disabled={signupMutation.isPending}
                 >
-                    {loginMutation.isPending ? '로그인 중...' : '로그인'}
+                    {signupMutation.isPending ? '가입 중...' : '회원가입'}
                 </Button>
             </form>
         </Box>
